@@ -2,7 +2,7 @@ import sys
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field, Json
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, EmailStr, Field, Json
 
 if sys.version_info < (3, 8):
     from typing_extensions import Literal, TypeAlias
@@ -199,7 +199,7 @@ class Operation(BaseModel):
 
 class Parameter(BaseModel):
     description: Optional[str]
-    _schema: Optional[Schema] = Field(alias="schema")
+    schema_: Optional[Schema] = Field(..., alias="schema")
     location: Optional[str]
 
 
@@ -273,7 +273,7 @@ class SecurityScheme(BaseModel):
     type: SecuritySchemesType
     description: Optional[str]
     name: str
-    _in: str = Field(alias="in")
+    in_: str = Field(alias="in")
     scheme: str
     bearerFormat: Optional[str]
     flows: OAUHTFlows
@@ -306,6 +306,8 @@ Identifier = str
 
 
 class AsyncAPI(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     asyncapi: str
     id: Optional[Identifier]
     info: Info
@@ -329,6 +331,7 @@ class AsyncAPI(BaseModel):
         required_by: str,
         values,
     ) -> None:
+        security_scheme_name: str
         (security_scheme_name, scopes), *other = requirement.items()
 
         if other:
@@ -376,6 +379,3 @@ class AsyncAPI(BaseModel):
             security_schemes = components.get("securitySchemes")
             security_scheme = security_schemes.get(security_scheme_name)
         return security_scheme
-
-    class Config:
-        extra = "allow"
